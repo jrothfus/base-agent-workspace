@@ -1,0 +1,24 @@
+{
+    "version": 1,
+    "description": "Commands to run inside a newly cloned task repo before implementation starts.",
+    "commands": [
+        {
+            "name": "Example command",
+            "run": "echo \"Configure start-task commands in .agent-workspace/start-task-commands.json\"",
+            "continue_on_error": true,
+            "enabled": false
+        },
+        {
+            "name": "Run a yarn clean",
+            "run": "yarn clean",
+            "continue_on_error": true,
+            "enabled": true
+        },
+        {
+            "name": "Install dependencies",
+            "run": "yarn install",
+            "continue_on_error": false,
+            "enabled": true
+        }
+    ]
+}
