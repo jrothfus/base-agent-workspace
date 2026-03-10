@@ -30,98 +30,82 @@ Edit `.agent-workspace/config.json` to set your workspace details:
 }
 ```
 
-## Starting Your First AI Task
+## Starting a Task
 
-### 1. Ask your AI agent to start a task
+Run `start-task` from the workspace root with a short description:
 
-Simply say to your AI:
-
-```
-Start a new task to [describe your task here]
+```bash
+bash start-task fix login bug
 ```
 
-Example:
-```
-Start a new task to fix the login button styling issue
+To also launch an AI agent with a prompt, add `--` followed by the prompt:
+
+```bash
+bash start-task fix login bug -- fix the broken login redirect after OAuth callback
 ```
 
-Or Ask it to handle a jira ticket (must be logged into the ACLI)
-```
-Start a new task with ticket [number]
-```
-
-The AI will:
-- Pull ticket details (if applicable)
+The script will:
 - Acquire a lock on an available worktree
-- Create or reuse an isolated working folder
-- Switch to the base branch and pull latest changes
-- Create a new task branch
-- Create a symbolic link with your task description
+- Pull the latest changes from the base branch
+- Create a symbolic link in the workspace root named after your description (e.g. `fix-login-bug/`)
+- Open VS Code at the symlink
+- `cd` into the symlink directory
+- If a prompt was given, run `claude "<prompt>"` — when claude exits you remain in the worktree directory
 
-### 2. Let the AI work
+## Ending a Task
 
-The AI will work in its isolated environment at:
-- `.agent-workspace/worktrees/{unique-id}/`
-- Or via the symbolic link at the workspace root
+### From inside the worktree (most common)
 
-### 3. Review the changes
+After `start-task` runs, your terminal is inside the worktree (e.g. `fix-login-bug/`). When you're done:
 
-After the AI completes its work, review the code in the worktree folder. You can:
-- Use another AI agent to review the code
-- Manually inspect the changes
-- Run tests
-
-### 4. Commit and push
-
-Tell your AI:
-
-```
-Commit and push these changes, then create a PR
+```bash
+bash ../end-task
 ```
 
-### 5. End the task
+### From anywhere else
 
-When done (after merging or abandoning the work):
+Run `end-task` from the workspace root (or any other directory):
+
+```bash
+bash end-task
+```
+
+If there is only one active task, it will ask you to confirm. If there are multiple, it will show a numbered list:
 
 ```
-End this task and clean up
+Active tasks:
+  1) fix-login-bug
+  2) add-dark-mode
+
+Select task to end [1-2]:
 ```
 
-The AI will:
-- Switch back to base branch
-- Pull latest changes
-- Clean up uncommitted files
-- Release the lock for other agents to use
+### What ending a task does
+
+- Checks out the base branch and pulls latest
+- Resets and cleans uncommitted files in the worktree
+- Removes the symbolic link
+- Releases the lock so the worktree slot is available for reuse
 
 ## Quick Command Reference
 
 | Action | Command |
 |--------|---------|
-| Initialize workspace | `./init-workspace.sh` |
-| Start a task | Ask AI: "Start a new task to [task]" |
-| End a task | Ask AI: "End this task" |
-| Clean stuck locks | `./clean-locks.sh` |
+| Initialize workspace | `bash init-workspace.sh` |
+| Start a task | `bash start-task <description>` |
+| Start a task with an AI prompt | `bash start-task <description> -- <prompt>` |
+| End a task (from inside worktree) | `bash ../end-task` |
+| End a task (from workspace root) | `bash end-task` |
+| Clean stuck locks | `bash clean-locks.sh` |
 
 ## Troubleshooting
 
 ### All worktrees are locked
 
-If all worktrees are in use, the system will temporarily create a new one. Alternatively, run:
+If all worktrees are in use the system will temporarily create a new one. Alternatively, run:
 
 ```bash
-./clean-locks.sh
+bash clean-locks.sh
 ```
 
-This removes locks for worktrees that aren't actively being used.
-
-### Need to manually start/end tasks
-
-Start task:
-```bash
-python3 .scripts/start_task.py "short task description"
-```
-
-End task (from within a worktree):
-```bash
-python3 ../.scripts/end_task.py
-```
+This removes locks for worktrees that are no longer actively being used.
