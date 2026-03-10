@@ -17,16 +17,10 @@ to learn how to start developing.
 - Either Developer or AI commits and pushes to branch, creates a PR
 
 ## Skills
-In the top level of this workspace there are skills for your AI agents:
+Optional agent skills are available in `.agent_skills/`:
 
-### Neccesary
-- `start_task`: outlines how to clone, switch to a branch, and start its work
-- `end_task`: outlines how to clean up from a task
-- `git_skill`: outlines how to deal with git commands (how to do commit messages, how to structure PRs, how to make branch names)
-
-### Extras
-- `acli-jira`: a skill for the atlassian CLI, specifically for jira. This makes it easier to pull tickets directly and start work quicker.
+- `acli-jira`: a skill for the Atlassian CLI, specifically for Jira. Makes it easier to pull ticket details at the start of a task.
 
 ### Agent Skills in Repo
-You can have agent skills in the repo (specififed by `repo` inside `.agent-workspace/config.json`)
+You can have agent skills in the repo (specified by `repo` inside `.agent-workspace/config.json`)
 

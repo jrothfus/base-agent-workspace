@@ -51,20 +51,17 @@ This workspace is designed for AI-agent-driven development where each task is is
 
 ## Standard Agent Workflow
 
-1. Start from this workspace root.
-2. Attempt to acquire a lock for a worktree id
-2. If you acquired a lock, use the matching worktree, otherwise pull/clone the selected repo into the working tree (with name matching the working tree id), and make a symblic link with short task description
-3. Switch to the configured base branch and pull latest.
-4. Create a new task branch.
-5. Implement the bugfix/feature/ticket scope.
-6. Prompt developer for review.
-7. After approval, commit/push and open a PR.
+Task setup and teardown are handled by the human via bash scripts — the agent does NOT run start or end task scripts.
+
+1. The human starts a task with `bash start-task` — the agent will already be inside the prepared worktree when invoked.
+2. Read `.agent-workspace/config.json` to understand the repo and base branch.
+3. Create a new task branch from the current base branch.
+4. Implement the bugfix/feature/ticket scope.
+5. Prompt developer for review.
+6. After approval, commit/push and open a PR.
+7. The human ends the task with `bash end-task` — do not run cleanup scripts.
 
 ## Skills Usage
-
-### Required skills (when available)
-- `start_task`: clone/switch/bootstrap task work.
-- `end_task`: cleanup and close-out.
 
 ### Optional skills
 - `.agent_skills/acli-jira`: Jira workflows via Atlassian CLI.
@@ -76,11 +73,11 @@ This workspace is designed for AI-agent-driven development where each task is is
 - Keep changes scoped to the requested task.
 - Ask for review before final PR actions.
 - Prefer small, reviewable commits.
+- Do NOT run `.scripts/start_task.py` or `.scripts/end_task.py` — these are for human use only.
 
 ## Quick Start Checklist
 
 - Read `.agent-workspace/config.json` first.
-- Confirm repo folder exists (or clone it).
 - Confirm current branch tracks configured base branch.
 - Create a fresh task branch.
 - Begin implementation.
