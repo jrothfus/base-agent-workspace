@@ -307,12 +307,8 @@ class TaskStarter:
             print(f"Worktree: {worktree_dir}")
             print(f"Shortcut: {symlink_path}")
             
-            # Open VS Code at the symlink path (user-friendly name)
-            print(f"\nOpening VS Code at {symlink_path}")
-            subprocess.run(
-                ["code", str(symlink_path)],
-                check=False  # Don't fail if VS Code isn't installed
-            )
+            # Machine-readable output for the caller
+            print(f"SYMLINK_PATH={symlink_path}")
             
         except Exception:
             self.cleanup_lock()
