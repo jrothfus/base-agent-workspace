@@ -68,7 +68,7 @@ else
     # Only one active task — confirm and proceed
     echo "Active task: ${active_tasks[0]}"
     read -r -p "End this task? [y/N] " confirm
-    if [[ "${confirm,,}" != "y" ]]; then
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
       echo "Aborted." >&2
       exit 1
     fi
