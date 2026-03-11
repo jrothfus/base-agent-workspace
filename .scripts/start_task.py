@@ -211,49 +211,85 @@ class TaskStarter:
         
         return worktree_dir
     
+    def _run_command(self, run_value: str, worktree_dir: Path) -> int:
+        """Run a single shell command in the worktree directory.
+
+        Returns:
+            The process return code.
+        """
+        result = subprocess.run(run_value, shell=True, cwd=worktree_dir)
+        return result.returncode
+
+    def _run_command_list(self, commands: list, worktree_dir: Path, context: str) -> bool:
+        """Run a list of command entries, respecting continue_on_error / on_fail.
+
+        Args:
+            commands: List of command dicts to execute.
+            worktree_dir: Working directory for each command.
+            context: Label used in log messages (e.g. "startup" or "on_fail").
+
+        Returns:
+            True if all commands succeeded (or failures were allowed),
+            False if a hard failure occurred and execution should stop.
+        """
+        for command in commands:
+            if not isinstance(command, dict):
+                continue
+
+            if command.get('enabled') is not True:
+                continue
+
+            name = command.get('name', 'Unnamed command')
+            run_value = command.get('run')
+            continue_on_error = bool(command.get('continue_on_error', False))
+            on_fail = command.get('on_fail')
+            continue_on_success = bool(command.get('continue_on_success', False))
+
+            if not isinstance(run_value, str) or not run_value.strip():
+                print(f"Skipping invalid {context} command entry: {name}")
+                continue
+
+            print(f"Running {context} command: {name}")
+            returncode = self._run_command(run_value, worktree_dir)
+
+            if returncode != 0:
+                print(
+                    f"{context} command failed ({returncode}): {name}",
+                    file=sys.stderr
+                )
+
+                # Attempt on_fail recovery commands if provided
+                if isinstance(on_fail, list) and on_fail:
+                    print(f"Running on_fail commands for: {name}")
+                    recovery_ok = self._run_command_list(on_fail, worktree_dir, f"{context}:on_fail")
+
+                    if recovery_ok and continue_on_success:
+                        print(f"on_fail recovery succeeded for '{name}', continuing.")
+                        continue
+
+                # No recovery, or recovery failed, or continue_on_success not set
+                if not continue_on_error:
+                    return False
+
+        return True
+
     def run_startup_commands(self, worktree_dir: Path) -> None:
         """Run startup commands from configuration if they exist."""
         if not self.start_task_commands_path.is_file():
             return
-        
+
         with open(self.start_task_commands_path, 'r', encoding='utf-8') as f:
             payload = json.load(f)
-        
+
         commands = payload.get('commands', [])
         if not isinstance(commands, list):
             raise TaskStarterError(
                 'start-task-commands.json commands must be an array'
             )
-        
-        for command in commands:
-            if not isinstance(command, dict):
-                continue
-            
-            if command.get('enabled') is not True:
-                continue
-            
-            name = command.get('name', 'Unnamed command')
-            run_value = command.get('run')
-            continue_on_error = bool(command.get('continue_on_error', False))
-            
-            if not isinstance(run_value, str) or not run_value.strip():
-                print(f"Skipping invalid command entry: {name}")
-                continue
-            
-            print(f"Running startup command: {name}")
-            result = subprocess.run(
-                run_value,
-                shell=True,
-                cwd=worktree_dir
-            )
-            
-            if result.returncode != 0:
-                print(
-                    f"Startup command failed ({result.returncode}): {name}",
-                    file=sys.stderr
-                )
-                if not continue_on_error:
-                    sys.exit(result.returncode)
+
+        ok = self._run_command_list(commands, worktree_dir, "startup")
+        if not ok:
+            sys.exit(1)
     
     # Agent config directories that need a 'skills' symlink injected.
     AGENT_CONFIG_DIRS = [".claude", ".codex", ".openclaw"]

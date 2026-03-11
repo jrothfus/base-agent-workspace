@@ -9,16 +9,18 @@
             "enabled": false
         },
         {
-            "name": "Run a yarn clean",
-            "run": "yarn clean",
-            "continue_on_error": true,
-            "enabled": true
-        },
-        {
-            "name": "Install dependencies",
+            "name": "Example with on_fail recovery",
             "run": "yarn install",
             "continue_on_error": false,
-            "enabled": true
+            "enabled": false,
+            "on_fail": [
+                {
+                    "name": "yarn clean install",
+                    "run": "yarn clean && yarn install",
+                    "enabled": true
+                }
+            ],
+            "continue_on_success": true
         }
     ]
 }

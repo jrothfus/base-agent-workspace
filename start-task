@@ -27,6 +27,9 @@ fi
 description="${description_parts[*]}"
 prompt="${prompt_parts[*]:-}"
 
+# Set terminal tab title to the task description
+printf '\033]0;%s\007' "$description"
+
 # Run python setup and capture output; extract the symlink path from the last SYMLINK_PATH= line
 output="$(python3 "$WORKSPACE_ROOT/.scripts/start_task.py" "$description")"
 printf '%s\n' "$output"
