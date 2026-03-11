@@ -255,6 +255,59 @@ class TaskStarter:
                 if not continue_on_error:
                     sys.exit(result.returncode)
     
+    # Agent config directories that need a 'skills' symlink injected.
+    AGENT_CONFIG_DIRS = [".claude", ".codex", ".openclaw"]
+
+    def inject_skills(self, worktree_dir: Path) -> None:
+        """Inject skills symlinks and git-exclude entries into the worktree.
+
+        For each agent config directory (e.g. .claude, .codex, .openclaw):
+          1. Create the dir inside the worktree if it doesn't exist.
+          2. Create/replace a 'skills' symlink pointing at the workspace-level
+             .agent_skills directory.
+          3. Add the config dir to .git/info/exclude so git never sees it.
+        """
+        skills_source = self.workspace_root / ".agent_skills"
+        if not skills_source.is_dir():
+            print("Skipping skill injection: .agent_skills not found")
+            return
+
+        exclude_path = worktree_dir / ".git" / "info" / "exclude"
+        exclude_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Read existing excludes so we don't duplicate entries
+        existing_excludes: set[str] = set()
+        if exclude_path.is_file():
+            existing_excludes = set(exclude_path.read_text(encoding="utf-8").splitlines())
+
+        new_excludes: list[str] = []
+
+        for cfg_dir_name in self.AGENT_CONFIG_DIRS:
+            cfg_dir = worktree_dir / cfg_dir_name
+            cfg_dir.mkdir(exist_ok=True)
+
+            link_path = cfg_dir / "skills"
+            if link_path.exists() or link_path.is_symlink():
+                print(f"Skipping skills injection for {cfg_dir_name}: already exists")
+                continue
+            link_path.symlink_to(skills_source)
+            print(f"Injected skills: {link_path} -> {skills_source}")
+
+            # Exclude the whole config dir from git tracking
+            exclude_entry = f"/{cfg_dir_name}/"
+            if exclude_entry not in existing_excludes:
+                new_excludes.append(exclude_entry)
+
+        if new_excludes:
+            with open(exclude_path, "a", encoding="utf-8") as f:
+                # Ensure we start on a new line
+                if exclude_path.stat().st_size > 0:
+                    f.write("\n")
+                f.write("# Injected by start_task — agent skill dirs\n")
+                for entry in new_excludes:
+                    f.write(f"{entry}\n")
+            print(f"Updated git exclude: {exclude_path}")
+
     def create_symlink(self, worktree_dir: Path) -> Path:
         """Create a symlink to the worktree directory.
         
@@ -294,7 +347,10 @@ class TaskStarter:
             
             # Run startup commands
             self.run_startup_commands(worktree_dir)
-            
+
+            # Inject agent skills into the worktree
+            self.inject_skills(worktree_dir)
+
             # Create symlink
             symlink_path = self.create_symlink(worktree_dir)
             

@@ -2,3 +2,6 @@
 .codex
 .openclaw
 .quack
+.agent-workspace/locks
+.agent-workspace/worktree-ids.json
+.agent-workspace/worktrees
