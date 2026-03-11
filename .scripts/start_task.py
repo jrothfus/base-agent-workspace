@@ -243,7 +243,6 @@ class TaskStarter:
             run_value = command.get('run')
             continue_on_error = bool(command.get('continue_on_error', False))
             on_fail = command.get('on_fail')
-            continue_on_success = bool(command.get('continue_on_success', False))
 
             if not isinstance(run_value, str) or not run_value.strip():
                 print(f"Skipping invalid {context} command entry: {name}")
@@ -258,14 +257,18 @@ class TaskStarter:
                     file=sys.stderr
                 )
 
-                # Attempt on_fail recovery commands if provided
-                if isinstance(on_fail, list) and on_fail:
-                    print(f"Running on_fail commands for: {name}")
-                    recovery_ok = self._run_command_list(on_fail, worktree_dir, f"{context}:on_fail")
+                # Attempt on_fail recovery if provided
+                if isinstance(on_fail, dict):
+                    on_fail_commands = on_fail.get('commands', [])
+                    continue_on_success = bool(on_fail.get('continue_on_success', False))
 
-                    if recovery_ok and continue_on_success:
-                        print(f"on_fail recovery succeeded for '{name}', continuing.")
-                        continue
+                    if isinstance(on_fail_commands, list) and on_fail_commands:
+                        print(f"Running on_fail commands for: {name}")
+                        recovery_ok = self._run_command_list(on_fail_commands, worktree_dir, f"{context}:on_fail")
+
+                        if recovery_ok and continue_on_success:
+                            print(f"on_fail recovery succeeded for '{name}', continuing.")
+                            continue
 
                 # No recovery, or recovery failed, or continue_on_success not set
                 if not continue_on_error:

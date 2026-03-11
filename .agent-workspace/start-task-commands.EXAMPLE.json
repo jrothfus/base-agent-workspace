@@ -13,14 +13,16 @@
             "run": "yarn install",
             "continue_on_error": false,
             "enabled": false,
-            "on_fail": [
-                {
-                    "name": "yarn clean install",
-                    "run": "yarn clean && yarn install",
-                    "enabled": true
-                }
-            ],
-            "continue_on_success": true
+            "on_fail": {
+                "continue_on_success": true,
+                "commands": [
+                    {
+                        "name": "yarn clean install",
+                        "run": "yarn clean && yarn install",
+                        "enabled": true
+                    }
+                ]
+            }
         }
     ]
 }
