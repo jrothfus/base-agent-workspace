@@ -5,3 +5,5 @@
 .agent-workspace/locks
 .agent-workspace/worktree-ids.json
 .agent-workspace/worktrees
+.agent-workspace/config.json
+.scripts/__pycache__
