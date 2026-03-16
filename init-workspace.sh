@@ -109,6 +109,9 @@ PY
 
 echo "Updated config: $CONFIG_PATH"
 
+echo "Initializing superpowers submodule..."
+git -C "$WORKSPACE_ROOT" submodule update --init --recursive
+
 if [[ ! -d "$BASE_REPO_DIR/.git" ]]; then
   if [[ -e "$BASE_REPO_DIR" ]]; then
     echo "Error: $BASE_REPO_DIR exists but is not a git repository" >&2

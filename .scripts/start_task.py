@@ -294,30 +294,48 @@ class TaskStarter:
         if not ok:
             sys.exit(1)
     
-    # Agent config directories that need a 'skills' symlink injected.
+    # Agent config directories that need skill symlinks injected.
     AGENT_CONFIG_DIRS = [".claude", ".codex", ".openclaw"]
 
+    # Directories containing skill folders (relative to workspace root).
+    SKILL_SOURCES = [".agent_skills", ".superpowers/skills"]
+
+    # Extra asset directories injected only into .claude/ (Claude Code).
+    CLAUDE_EXTRA_ASSETS = {
+        "agents": ".superpowers/agents",
+        "commands": ".superpowers/commands",
+    }
+
     def inject_skills(self, worktree_dir: Path) -> None:
-        """Inject skills symlinks and git-exclude entries into the worktree.
+        """Inject skill, agent, and command symlinks into the worktree.
 
         For each agent config directory (e.g. .claude, .codex, .openclaw):
           1. Create the dir inside the worktree if it doesn't exist.
-          2. Create/replace a 'skills' symlink pointing at the workspace-level
-             .agent_skills directory.
-          3. Add the config dir to .git/info/exclude so git never sees it.
+          2. Create a ``skills/`` subdirectory.
+          3. For each skill source (.agent_skills, .superpowers/skills),
+             create a symlink per skill directory inside ``skills/``.
+          4. (Claude only) Create ``agents/`` and ``commands/`` directories
+             with per-file symlinks back to .superpowers.
+          5. Add the config dir to .git/info/exclude so git never sees it.
         """
-        skills_source = self.workspace_root / ".agent_skills"
-        if not skills_source.is_dir():
-            print("Skipping skill injection: .agent_skills not found")
+        skill_sources: List[Path] = []
+        for rel in self.SKILL_SOURCES:
+            src = self.workspace_root / rel
+            if src.is_dir():
+                skill_sources.append(src)
+
+        if not skill_sources:
+            print("Skipping skill injection: no skill sources found")
             return
 
         exclude_path = worktree_dir / ".git" / "info" / "exclude"
         exclude_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Read existing excludes so we don't duplicate entries
         existing_excludes: set[str] = set()
         if exclude_path.is_file():
-            existing_excludes = set(exclude_path.read_text(encoding="utf-8").splitlines())
+            existing_excludes = set(
+                exclude_path.read_text(encoding="utf-8").splitlines()
+            )
 
         new_excludes: list[str] = []
 
@@ -325,24 +343,47 @@ class TaskStarter:
             cfg_dir = worktree_dir / cfg_dir_name
             cfg_dir.mkdir(exist_ok=True)
 
-            link_path = cfg_dir / "skills"
-            if link_path.exists() or link_path.is_symlink():
-                print(f"Skipping skills injection for {cfg_dir_name}: already exists")
-                continue
-            link_path.symlink_to(skills_source)
-            print(f"Injected skills: {link_path} -> {skills_source}")
+            # --- Skills (individual symlinks per skill) ---
+            skills_dir = cfg_dir / "skills"
+            skills_dir.mkdir(exist_ok=True)
 
-            # Exclude the whole config dir from git tracking
+            for source in skill_sources:
+                for entry in sorted(source.iterdir()):
+                    if not entry.is_dir() or entry.name.startswith("."):
+                        continue
+                    link_path = skills_dir / entry.name
+                    if link_path.exists() or link_path.is_symlink():
+                        continue
+                    link_path.symlink_to(entry)
+                    print(f"Injected skill: {link_path.name} -> {entry}")
+
+            # --- Claude-only extras (agents, commands) ---
+            if cfg_dir_name == ".claude":
+                for asset_type, rel_source in self.CLAUDE_EXTRA_ASSETS.items():
+                    source_dir = self.workspace_root / rel_source
+                    if not source_dir.is_dir():
+                        continue
+                    target_dir = cfg_dir / asset_type
+                    target_dir.mkdir(exist_ok=True)
+                    for entry in sorted(source_dir.iterdir()):
+                        if entry.name.startswith("."):
+                            continue
+                        link_path = target_dir / entry.name
+                        if link_path.exists() or link_path.is_symlink():
+                            continue
+                        link_path.symlink_to(entry)
+                        print(f"Injected {asset_type}: {link_path.name} -> {entry}")
+
+            # Exclude the whole config dir from git tracking.
             exclude_entry = f"/{cfg_dir_name}/"
             if exclude_entry not in existing_excludes:
                 new_excludes.append(exclude_entry)
 
         if new_excludes:
             with open(exclude_path, "a", encoding="utf-8") as f:
-                # Ensure we start on a new line
                 if exclude_path.stat().st_size > 0:
                     f.write("\n")
-                f.write("# Injected by start_task — agent skill dirs\n")
+                f.write("# Injected by start_task — agent config dirs\n")
                 for entry in new_excludes:
                     f.write(f"{entry}\n")
             print(f"Updated git exclude: {exclude_path}")
