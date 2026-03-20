@@ -21,9 +21,22 @@ def prompt_with_default(label: str, default: str = "") -> str:
         print("Value is required. Please try again.")
 
 
-def load_current_config(config_path: Path) -> tuple[str, str, str]:
+def prompt_yes_no(label: str, default: bool = True) -> bool:
+    hint = "Y/n" if default else "y/N"
+    while True:
+        value = input(f"{label} [{hint}]: ").strip().lower()
+        if not value:
+            return default
+        if value in ("y", "yes"):
+            return True
+        if value in ("n", "no"):
+            return False
+        print("Please enter y or n.")
+
+
+def load_current_config(config_path: Path) -> tuple[str, str, str, str]:
     if not config_path.is_file():
-        return "", "", ""
+        return "", "", "", ""
 
     with open(config_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -33,11 +46,12 @@ def load_current_config(config_path: Path) -> tuple[str, str, str]:
         repo.get("name", ""),
         repo.get("url", ""),
         data.get("base_branch", ""),
+        data.get("ide", ""),
     )
 
 
 def save_config(
-    config_path: Path, repo_name: str, repo_url: str, base_branch: str
+    config_path: Path, repo_name: str, repo_url: str, base_branch: str, ide: str
 ) -> None:
     config: dict = {}
     if config_path.is_file():
@@ -52,6 +66,7 @@ def save_config(
     repo["url"] = repo_url
     config["repo"] = repo
     config["base_branch"] = base_branch
+    config["ide"] = ide
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     with open(config_path, "w", encoding="utf-8") as f:
@@ -95,7 +110,7 @@ def main() -> None:
         print(f"Error: init directory not found at: {init_dir}", file=sys.stderr)
         sys.exit(1)
 
-    current_name, current_url, current_branch = load_current_config(config_path)
+    current_name, current_url, current_branch, current_ide = load_current_config(config_path)
 
     print("Workspace init")
     print("--------------")
@@ -104,7 +119,13 @@ def main() -> None:
     repo_url = prompt_with_default("Repo URL", current_url)
     base_branch = prompt_with_default("Base branch", current_branch)
 
-    save_config(config_path, repo_name, repo_url, base_branch)
+    use_vscode = prompt_yes_no(
+        "Do you use VS Code (with the `code` terminal command installed)?",
+        default=current_ide == "vscode" if current_ide else True,
+    )
+    ide = "vscode" if use_vscode else "none"
+
+    save_config(config_path, repo_name, repo_url, base_branch, ide)
     print(f"Updated config: {config_path}")
 
     print("Initializing superpowers submodule...")

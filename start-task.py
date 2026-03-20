@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Start a new task: parse arguments, set up the worktree via .scripts/start_task.py,
-open VS Code, and optionally launch claude with a prompt.
+optionally open an IDE, and optionally launch claude with a prompt.
 """
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -64,12 +65,19 @@ def main() -> None:
         print("Error: could not determine symlink path from start_task output", file=sys.stderr)
         sys.exit(1)
 
-    print(f"\nOpening VS Code at {symlink_path}")
-    subprocess.Popen(
-        ["code", symlink_path],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    config_path = workspace_root / ".agent-workspace" / "config.json"
+    ide = "none"
+    if config_path.is_file():
+        with open(config_path, "r", encoding="utf-8") as f:
+            ide = json.load(f).get("ide", "none")
+
+    if ide == "vscode":
+        print(f"\nOpening VS Code at {symlink_path}")
+        subprocess.Popen(
+            ["code", symlink_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     if prompt:
         print(f"Starting claude in {symlink_path}")
