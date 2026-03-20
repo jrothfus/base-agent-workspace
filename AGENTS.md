@@ -12,19 +12,19 @@ This workspace provides **isolated task worktrees** with a full **superpowers sk
 
 Task setup and teardown are handled by the human — the agent does NOT run start or end task scripts.
 
-1. The human starts a task with `bash start-task` — you are already inside the prepared worktree.
+1. The human starts a task with `python3 start-task.py` — you are already inside the prepared worktree.
 2. Read `.agent-workspace/config.json` to understand the repo and base branch.
 3. Create a new task branch from the current base branch.
 4. **Check for applicable skills before acting** — brainstorming for features, systematic-debugging for bugs.
 5. Follow skill workflows: brainstorm → write plan → execute with TDD → review → finish.
 6. Prompt developer for review.
 7. After approval, commit/push and open a PR.
-8. The human ends the task with `bash end-task`.
+8. The human ends the task with `python3 end-task.py`.
 
 ## Skills
 
 ### Superpowers Skills (auto-injected)
-brainstorming, writing-plans, subagent-driven-development, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, finishing-a-development-branch, dispatching-parallel-agents, using-superpowers, writing-skills
+brainstorming, writing-plans, subagent-driven-development, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, finishing-a-development-branch, dispatching-parallel-agents, using-git-worktrees, using-superpowers, writing-skills
 
 ### Workspace Skills (in `.agent_skills/`)
 - **acli-jira**: Jira workflows via Atlassian CLI

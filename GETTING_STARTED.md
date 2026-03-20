@@ -7,13 +7,16 @@
 Run the initialization script:
 
 ```bash
-./init-workspace.sh
+python3 init-workspace.py
 ```
 
 This will:
+- Initialize the Superpowers git submodule
 - Pull the base repository
+- Check for required dependencies
 - Generate unique worktree IDs
 - Protect the base folder from accidental deletion
+- Sync agent skills into the workspace
 
 ### 2. Further Configure your workspace (optional)
 
@@ -32,16 +35,16 @@ Edit `.agent-workspace/config.json` to set your workspace details:
 
 ## Starting a Task
 
-Run `start-task` from the workspace root with a short description:
+Run `start-task.py` from the workspace root with a short description:
 
 ```bash
-bash start-task fix login bug
+python3 start-task.py fix login bug
 ```
 
 To also launch an AI agent with a prompt, add `--` followed by the prompt:
 
 ```bash
-bash start-task fix login bug -- fix the broken login redirect after OAuth callback
+python3 start-task.py fix login bug -- fix the broken login redirect after OAuth callback
 ```
 
 The script will:
@@ -56,18 +59,18 @@ The script will:
 
 ### From inside the worktree (most common)
 
-After `start-task` runs, your terminal is inside the worktree (e.g. `fix-login-bug/`). When you're done:
+After `start-task.py` runs, your terminal is inside the worktree (e.g. `fix-login-bug/`). When you're done:
 
 ```bash
-bash ../end-task
+python3 ../end-task.py
 ```
 
 ### From anywhere else
 
-Run `end-task` from the workspace root (or any other directory):
+Run `end-task.py` from the workspace root (or any other directory):
 
 ```bash
-bash end-task
+python3 end-task.py
 ```
 
 If there is only one active task, it will ask you to confirm. If there are multiple, it will show a numbered list:
@@ -91,21 +94,21 @@ Select task to end [1-2]:
 
 | Action | Command |
 |--------|---------|
-| Initialize workspace | `bash init-workspace.sh` |
-| Start a task | `bash start-task <description>` |
-| Start a task with an AI prompt | `bash start-task <description> -- <prompt>` |
-| End a task (from inside worktree) | `bash ../end-task` |
-| End a task (from workspace root) | `bash end-task` |
-| Clean stuck locks | `bash clean-locks.sh` |
+| Initialize workspace | `python3 init-workspace.py` |
+| Start a task | `python3 start-task.py <description>` |
+| Start a task with an AI prompt | `python3 start-task.py <description> -- <prompt>` |
+| End a task (from inside worktree) | `python3 ../end-task.py` |
+| End a task (from workspace root) | `python3 end-task.py` |
+| Clean stuck locks | `python3 clean-locks.py` |
 
 ## Troubleshooting
 
 ### All worktrees are locked
 
-If all worktrees are in use the system will temporarily create a new one. Alternatively, run:
+If all worktrees are in use the system will create an additional one with a random ID. Note that these overflow worktrees persist after the task ends but won't be automatically reused by future tasks. To reclaim disk space, run:
 
 ```bash
-bash clean-locks.sh
+python3 clean-locks.py
 ```
 
 This removes locks for worktrees that are no longer actively being used.

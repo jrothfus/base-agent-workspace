@@ -1,8 +1,0 @@
-{
-    "repo": {
-        "name": "Example Repo",
-        "url": "https://github.com/example/repo.git"
-    },
-    "base_branch": "main",
-    "max_number_of_worktrees": 3
-}

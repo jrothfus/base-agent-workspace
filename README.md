@@ -4,7 +4,7 @@ Multi-agent task isolation workspace with [Superpowers](https://github.com/obra/
 
 ## What This Does
 
-Each AI agent gets an **isolated worktree** (cloned from a cached base repo for speed) and a full **Superpowers skills library** that enforces disciplined development: brainstorming → planning → TDD → code review → PR.
+Each AI agent gets an **isolated worktree** (copied from a cached base repo for speed) and a full **Superpowers skills library** that enforces disciplined development: brainstorming → planning → TDD → code review → PR.
 
 Multiple agents can work on the same repo simultaneously without conflicts.
 
@@ -14,11 +14,11 @@ The below is information about how the repo works. Read `GETTING_STARTED.md` to 
 
 ## The Workflow
 
-1. Run `bash start-task "fix login bug" -- "fix the broken OAuth redirect"`.
+1. Run `python3 start-task.py "fix login bug" -- "fix the broken OAuth redirect"`.
 2. Agent is placed in an isolated worktree with all skills injected.
 3. Agent follows the Superpowers workflow: brainstorm the approach → write an implementation plan → execute with TDD → verify → create PR.
 4. Developer reviews. Agent commits and pushes.
-5. Run `bash end-task` to clean up.
+5. Run `python3 end-task.py` to clean up.
 
 ## What Gets Injected Into Each Worktree
 
